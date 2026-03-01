@@ -1,6 +1,6 @@
 'use client'
 
-import { LogOut, Settings } from 'lucide-react'
+import { BookOpen, LogOut, Settings } from 'lucide-react'
 import Link from 'next/link'
 import { logout } from '@/lib/actions/auth'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -58,6 +58,12 @@ export function UserNav({ user }: UserNavProps) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
+          <DropdownMenuItem asChild>
+            <Link href="/guide">
+              <BookOpen className="mr-2 h-4 w-4" />
+              <span>Guide d&apos;import</span>
+            </Link>
+          </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href="/settings">
               <Settings className="mr-2 h-4 w-4" />

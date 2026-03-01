@@ -1,9 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Hash, Loader2, MapPin, Plus, Sparkles } from 'lucide-react'
+import { Hash, MapPin, Plus } from 'lucide-react'
 import { createApartment, updateApartment } from '@/lib/actions/apartments'
-import { scrapeApartment } from '@/lib/actions/scrape'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -29,13 +28,28 @@ import { toast } from 'sonner'
 import type { ApartmentWithRatings, ApartmentStatus } from '@/types/database'
 import { STATUS_CONFIG, STATUS_ORDER } from '@/lib/apartment-status'
 
+export interface ImportedApartmentData {
+  title?: string
+  url?: string
+  price?: number | string
+  surface?: number | string
+  rooms?: number | string
+  charges?: number | string
+  photo_url?: string
+  address?: string
+  is_furnished?: boolean
+  latitude?: number
+  longitude?: number
+}
+
 interface ApartmentFormProps {
   apartment?: ApartmentWithRatings
+  defaultValues?: ImportedApartmentData
   open?: boolean
   onOpenChange?: (open: boolean) => void
 }
 
-export function ApartmentForm({ apartment, open: controlledOpen, onOpenChange }: ApartmentFormProps) {
+export function ApartmentForm({ apartment, defaultValues, open: controlledOpen, onOpenChange }: ApartmentFormProps) {
   const isEditMode = !!apartment
 
   const [internalOpen, setInternalOpen] = useState(false)
@@ -43,31 +57,30 @@ export function ApartmentForm({ apartment, open: controlledOpen, onOpenChange }:
   const setOpen = onOpenChange ?? setInternalOpen
 
   const [loading, setLoading] = useState(false)
-  const [scrapeLoading, setScrapeLoading] = useState(false)
 
   // Controlled form fields
-  const [title, setTitle] = useState('')
-  const [url, setUrl] = useState('')
-  const [price, setPrice] = useState('')
-  const [surface, setSurface] = useState('')
-  const [rooms, setRooms] = useState('')
-  const [charges, setCharges] = useState('')
-  const [photoUrl, setPhotoUrl] = useState('')
-  const [isFurnished, setIsFurnished] = useState(false)
+  const [title, setTitle] = useState(defaultValues?.title ?? '')
+  const [url, setUrl] = useState(defaultValues?.url ?? '')
+  const [price, setPrice] = useState(defaultValues?.price?.toString() ?? '')
+  const [surface, setSurface] = useState(defaultValues?.surface?.toString() ?? '')
+  const [rooms, setRooms] = useState(defaultValues?.rooms?.toString() ?? '')
+  const [charges, setCharges] = useState(defaultValues?.charges?.toString() ?? '')
+  const [photoUrl, setPhotoUrl] = useState(defaultValues?.photo_url ?? '')
+  const [isFurnished, setIsFurnished] = useState(defaultValues?.is_furnished ?? false)
   const [hasTerrace, setHasTerrace] = useState(false)
   const [hasParking, setHasParking] = useState(false)
 
   const [status, setStatus] = useState<ApartmentStatus>('to_visit')
 
-  const [locMode, setLocMode] = useState<'address' | 'coords'>('address')
-  const [addressText, setAddressText] = useState('')
+  const hasCoords = !!(defaultValues?.latitude && defaultValues?.longitude)
+  const [locMode, setLocMode] = useState<'address' | 'coords'>(
+    hasCoords ? 'coords' : defaultValues?.address ? 'address' : 'address'
+  )
+  const [addressText, setAddressText] = useState(defaultValues?.address ?? '')
   const [geoLat, setGeoLat] = useState<number | null>(null)
   const [geoLng, setGeoLng] = useState<number | null>(null)
-  const [coordLat, setCoordLat] = useState('')
-  const [coordLng, setCoordLng] = useState('')
-
-  // SeLoger import
-  const [scrapeUrl, setScrapeUrl] = useState('')
+  const [coordLat, setCoordLat] = useState(defaultValues?.latitude?.toString() ?? '')
+  const [coordLng, setCoordLng] = useState(defaultValues?.longitude?.toString() ?? '')
 
   useEffect(() => {
     if (open && apartment) {
@@ -107,42 +120,8 @@ export function ApartmentForm({ apartment, open: controlledOpen, onOpenChange }:
       setGeoLng(null)
       setCoordLat('')
       setCoordLng('')
-      setScrapeUrl('')
     }
   }, [open, apartment])
-
-  async function handleScrape() {
-    if (!scrapeUrl) return
-    setScrapeLoading(true)
-    const { data, error } = await scrapeApartment(scrapeUrl)
-    setScrapeLoading(false)
-
-    if (error) { toast.error(error); return }
-    if (!data || Object.keys(data).length === 0) { toast.warning('Aucune donnée récupérée'); return }
-
-    let filled = 0
-    if (data.title) { setTitle(data.title); filled++ }
-    if (data.price) { setPrice(data.price.toString()); filled++ }
-    if (data.surface) { setSurface(data.surface.toString()); filled++ }
-    if (data.address) { setAddressText(data.address); filled++ }
-    if (data.latitude && data.longitude) {
-      setGeoLat(data.latitude)
-      setGeoLng(data.longitude)
-      setCoordLat(data.latitude.toString())
-      setCoordLng(data.longitude.toString())
-      if (!data.address) setLocMode('coords')
-      filled++
-    }
-    if (data.rooms) { setRooms(data.rooms.toString()); filled++ }
-    if (data.charges) { setCharges(data.charges.toString()); filled++ }
-    if (data.photoUrl) { setPhotoUrl(data.photoUrl); filled++ }
-    if (data.isFurnished !== undefined) { setIsFurnished(data.isFurnished); filled++ }
-    if (data.hasTerrace) { setHasTerrace(true); filled++ }
-    if (data.hasParking) { setHasParking(true); filled++ }
-    if (!url) { setUrl(scrapeUrl); filled++ }
-
-    toast.success(`${filled} champ${filled > 1 ? 's' : ''} pré-rempli${filled > 1 ? 's' : ''} — vérifiez et corrigez si besoin`)
-  }
 
   async function handleSubmit(formData: FormData) {
     setLoading(true)
@@ -270,35 +249,6 @@ export function ApartmentForm({ apartment, open: controlledOpen, onOpenChange }:
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          {/* SeLoger import — create mode only */}
-          {!isEditMode && (
-            <div className="grid gap-2 rounded-lg border border-dashed p-3">
-              <Label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                <Sparkles className="h-3.5 w-3.5" />
-                Import SeLoger / LeBonCoin
-              </Label>
-              <div className="flex gap-2">
-                <Input
-                  type="url"
-                  placeholder="https://www.seloger.com/... ou leboncoin.fr/..."
-                  value={scrapeUrl}
-                  onChange={(e) => setScrapeUrl(e.target.value)}
-                  className="h-8 text-xs"
-                />
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  className="h-8 shrink-0"
-                  disabled={!scrapeUrl || scrapeLoading}
-                  onClick={handleScrape}
-                >
-                  {scrapeLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Remplir'}
-                </Button>
-              </div>
-            </div>
-          )}
-
           <div className="grid gap-2">
             <Label htmlFor="title">Titre *</Label>
             <Input
