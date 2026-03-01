@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/layout/Header'
+import { PageTransition } from '@/components/layout/PageTransition'
 import { Toaster } from '@/components/ui/sonner'
 
 export default async function DashboardLayout({
@@ -26,8 +27,8 @@ export default async function DashboardLayout({
   return (
     <div className="relative min-h-screen flex flex-col">
       <Header />
-      <main className="flex-1 container px-4 md:px-6 lg:px-8 py-6 mx-auto animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
-        {children}
+      <main className="flex-1 container px-4 md:px-6 lg:px-8 py-6 mx-auto">
+        <PageTransition>{children}</PageTransition>
       </main>
       <Toaster />
     </div>
