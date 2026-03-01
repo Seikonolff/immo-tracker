@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -15,6 +15,7 @@ import {
   MarkerContent,
   MarkerPopup,
   MapRoute,
+  type MapViewport,
 } from "@/components/ui/map"
 import {
   Select,
@@ -61,6 +62,38 @@ const VALHALLA_COSTING: Record<TransportMode, string> = {
   cycling: 'bicycle',
 }
 
+const MAP_VIEWPORT_KEY = 'immo-tracker-map-viewport'
+
+function getInitialViewport(
+  apartments: ApartmentWithRatings[],
+  pois: PointOfInterest[]
+): { center: [number, number]; zoom: number } {
+  // 1. Position précédente sauvegardée
+  try {
+    const saved = localStorage.getItem(MAP_VIEWPORT_KEY)
+    if (saved) {
+      const { center, zoom } = JSON.parse(saved)
+      if (Array.isArray(center) && center.length === 2 && typeof zoom === 'number') {
+        return { center: center as [number, number], zoom }
+      }
+    }
+  } catch {}
+
+  // 2. Premier appartement avec coordonnées
+  const firstApt = apartments.find((a) => a.latitude && a.longitude)
+  if (firstApt) {
+    return { center: [firstApt.longitude!, firstApt.latitude!], zoom: 14 }
+  }
+
+  // 3. Premier POI
+  if (pois.length > 0) {
+    return { center: [pois[0].longitude, pois[0].latitude], zoom: 14 }
+  }
+
+  // 4. Paris par défaut
+  return { center: [2.3522, 48.8566], zoom: 12 }
+}
+
 // Decode Valhalla's precision-6 encoded polyline → [lng, lat][] (GeoJSON order)
 function decodePolyline6(encoded: string): [number, number][] {
   const coords: [number, number][] = []
@@ -90,6 +123,15 @@ interface ApartmentsMapProps {
 export function ApartmentsMap({ apartments, pois }: ApartmentsMapProps) {
   const router = useRouter()
   const [isClient, setIsClient] = useState(false)
+  const [initialViewport] = useState(() => getInitialViewport(apartments, pois))
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  const handleViewportChange = useCallback((vp: MapViewport) => {
+    clearTimeout(saveTimeoutRef.current)
+    saveTimeoutRef.current = setTimeout(() => {
+      localStorage.setItem(MAP_VIEWPORT_KEY, JSON.stringify({ center: vp.center, zoom: vp.zoom }))
+    }, 500)
+  }, [])
   const [routeCoords, setRouteCoords] = useState<[number, number][]>([])
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null)
   const [routeLoading, setRouteLoading] = useState(false)
@@ -111,13 +153,6 @@ export function ApartmentsMap({ apartments, pois }: ApartmentsMapProps) {
   const apartmentsWithCoords = apartments.filter(
     (apt) => apt.latitude && apt.longitude
   )
-
-  const center: [number, number] = apartmentsWithCoords.length > 0
-    ? [
-        apartmentsWithCoords.reduce((sum, apt) => sum + (apt.longitude || 0), 0) / apartmentsWithCoords.length,
-        apartmentsWithCoords.reduce((sum, apt) => sum + (apt.latitude || 0), 0) / apartmentsWithCoords.length,
-      ]
-    : [2.3522, 48.8566]
 
   async function fetchRoute(
     apt: ApartmentWithRatings,
@@ -218,7 +253,7 @@ export function ApartmentsMap({ apartments, pois }: ApartmentsMapProps) {
           {fullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
         </button>
 
-        <Map center={center} zoom={12}>
+        <Map center={initialViewport.center} zoom={initialViewport.zoom} onViewportChange={handleViewportChange}>
           {/* Apartment markers */}
           {apartmentsWithCoords.map((apartment) => (
             <MapMarker

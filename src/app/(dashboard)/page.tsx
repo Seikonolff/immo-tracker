@@ -80,10 +80,6 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     filteredApartments = filteredApartments.filter((a) => a.status === params.status)
   }
 
-  const apartmentsWithCoords = filteredApartments.filter(
-    (a) => a.latitude && a.longitude
-  )
-
   return (
     <ViewProvider>
     <div className="space-y-6">
@@ -104,7 +100,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
               <LayoutList className="h-4 w-4" />
               Liste
             </TabsTrigger>
-            <TabsTrigger value="map" disabled={apartmentsWithCoords.length === 0} className="gap-1.5">
+            <TabsTrigger value="map" className="gap-1.5">
               <MapIcon className="h-4 w-4" />
               Carte
             </TabsTrigger>
