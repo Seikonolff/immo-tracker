@@ -26,8 +26,8 @@ export function ApartmentList({ apartments }: ApartmentListProps) {
   if (view === 'list') {
     return (
       <div className="flex flex-col gap-2">
-        {apartments.map((apartment) => (
-          <ApartmentRow key={apartment.id} apartment={apartment} />
+        {apartments.map((apartment, i) => (
+          <ApartmentRow key={apartment.id} apartment={apartment} index={i} />
         ))}
       </div>
     )
@@ -35,8 +35,8 @@ export function ApartmentList({ apartments }: ApartmentListProps) {
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {apartments.map((apartment) => (
-        <ApartmentCard key={apartment.id} apartment={apartment} />
+      {apartments.map((apartment, i) => (
+        <ApartmentCard key={apartment.id} apartment={apartment} index={i} />
       ))}
     </div>
   )

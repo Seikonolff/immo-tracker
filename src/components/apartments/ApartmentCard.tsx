@@ -28,9 +28,10 @@ import { toast } from 'sonner'
 
 interface ApartmentCardProps {
   apartment: ApartmentWithRatings
+  index?: number
 }
 
-export function ApartmentCard({ apartment }: ApartmentCardProps) {
+export function ApartmentCard({ apartment, index = 0 }: ApartmentCardProps) {
   const pricePerM2 = Math.round(apartment.price / apartment.surface)
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -83,14 +84,17 @@ export function ApartmentCard({ apartment }: ApartmentCardProps) {
         onConfirm={handleDelete}
         loading={deleting}
       />
-      <Card className={`${apartment.is_archived ? 'opacity-60' : ''} overflow-hidden`}>
+      <Card
+        className={`group overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 animate-in fade-in-0 slide-in-from-bottom-3 [animation-fill-mode:both] ${apartment.is_archived ? 'opacity-60' : ''}`}
+        style={{ animationDuration: '300ms', animationDelay: `${Math.min(index * 50, 400)}ms` }}
+      >
         {apartment.photo_url && (
-          <div className="relative h-40 w-full -mt-6">
+          <div className="relative h-40 w-full -mt-6 overflow-hidden">
             <Image
               src={apartment.photo_url}
               alt={apartment.title}
               fill
-              className="object-cover"
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
           </div>

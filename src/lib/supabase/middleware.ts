@@ -33,21 +33,29 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Protected routes - redirect to login if not authenticated
-  const isAuthPage = request.nextUrl.pathname.startsWith('/login') ||
-                     request.nextUrl.pathname.startsWith('/signup')
-  const isAuthCallback = request.nextUrl.pathname.startsWith('/auth/')
+  const { pathname } = request.nextUrl
+  const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup')
+  const isAuthCallback = pathname.startsWith('/auth/')
+  const isOnboarding = pathname.startsWith('/onboarding')
 
+  // Unauthenticated: redirect to login (except auth pages and callbacks)
   if (!user && !isAuthPage && !isAuthCallback) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  // Redirect authenticated users away from auth pages
+  // Authenticated users: redirect away from auth pages to onboarding
   if (user && isAuthPage) {
     const url = request.nextUrl.clone()
-    url.pathname = '/'
+    url.pathname = '/onboarding'
+    return NextResponse.redirect(url)
+  }
+
+  // Prevent unauthenticated access to onboarding
+  if (!user && isOnboarding) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 

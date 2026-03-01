@@ -27,9 +27,10 @@ import { toast } from 'sonner'
 
 interface ApartmentRowProps {
   apartment: ApartmentWithRatings
+  index?: number
 }
 
-export function ApartmentRow({ apartment }: ApartmentRowProps) {
+export function ApartmentRow({ apartment, index = 0 }: ApartmentRowProps) {
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -71,8 +72,10 @@ export function ApartmentRow({ apartment }: ApartmentRowProps) {
         onConfirm={handleDelete}
         loading={deleting}
       />
-      <div className={`flex items-center gap-4 rounded-lg border bg-card px-4 py-3 shadow-sm transition-opacity ${apartment.is_archived ? 'opacity-60' : ''}`}>
-
+      <div
+        className={`group flex items-center gap-4 rounded-lg border bg-card px-4 py-3 shadow-sm transition-all duration-150 hover:shadow-md hover:bg-accent/30 animate-in fade-in-0 slide-in-from-left-2 [animation-fill-mode:both] ${apartment.is_archived ? 'opacity-60' : ''}`}
+        style={{ animationDuration: '250ms', animationDelay: `${Math.min(index * 40, 350)}ms` }}
+      >
         {/* Thumbnail */}
         <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-md bg-muted">
           {apartment.photo_url ? (
@@ -80,7 +83,7 @@ export function ApartmentRow({ apartment }: ApartmentRowProps) {
               src={apartment.photo_url}
               alt={apartment.title}
               fill
-              className="object-cover"
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
               sizes="80px"
             />
           ) : (

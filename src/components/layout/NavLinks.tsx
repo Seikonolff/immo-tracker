@@ -30,7 +30,7 @@ export function NavLinks() {
             {Icon && <Icon className="h-4 w-4" />}
             {label}
             {isActive && (
-              <span className="absolute -bottom-[19px] left-0 right-0 h-0.5 rounded-full bg-foreground" />
+              <span className="absolute -bottom-[19px] left-0 right-0 h-0.5 rounded-full bg-foreground animate-in slide-in-from-left-2 fade-in-0 duration-200" />
             )}
           </Link>
         )

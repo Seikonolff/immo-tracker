@@ -8,13 +8,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export function SignupForm() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [teamMode, setTeamMode] = useState<'create' | 'join'>('create')
 
   async function handleSubmit(formData: FormData) {
     setLoading(true)
@@ -92,33 +90,6 @@ export function SignupForm() {
               required
             />
           </div>
-
-          <div className="space-y-2">
-            <Label>Équipe</Label>
-            <Tabs value={teamMode} onValueChange={(v) => setTeamMode(v as 'create' | 'join')}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="create">Créer une équipe</TabsTrigger>
-                <TabsTrigger value="join">Rejoindre</TabsTrigger>
-              </TabsList>
-              <TabsContent value="create" className="mt-2">
-                <Input
-                  name="teamName"
-                  type="text"
-                  placeholder="Nom de l'équipe"
-                  required={teamMode === 'create'}
-                />
-              </TabsContent>
-              <TabsContent value="join" className="mt-2">
-                <Input
-                  name="inviteCode"
-                  type="text"
-                  placeholder="Code d'invitation"
-                  required={teamMode === 'join'}
-                />
-              </TabsContent>
-            </Tabs>
-          </div>
-
           {error && (
             <p className="text-sm text-red-500">{error}</p>
           )}
