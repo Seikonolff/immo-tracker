@@ -68,7 +68,18 @@ function getInitialViewport(
   apartments: ApartmentWithRatings[],
   pois: PointOfInterest[]
 ): { center: [number, number]; zoom: number } {
-  // 1. Position précédente sauvegardée
+  // 1. Premier appartement avec coordonnées (priorité aux données)
+  const firstApt = apartments.find((a) => a.latitude && a.longitude)
+  if (firstApt) {
+    return { center: [firstApt.longitude!, firstApt.latitude!], zoom: 14 }
+  }
+
+  // 2. Premier POI
+  if (pois.length > 0) {
+    return { center: [pois[0].longitude, pois[0].latitude], zoom: 14 }
+  }
+
+  // 3. Position précédente sauvegardée (si aucune donnée à afficher)
   try {
     const saved = localStorage.getItem(MAP_VIEWPORT_KEY)
     if (saved) {
@@ -78,17 +89,6 @@ function getInitialViewport(
       }
     }
   } catch {}
-
-  // 2. Premier appartement avec coordonnées
-  const firstApt = apartments.find((a) => a.latitude && a.longitude)
-  if (firstApt) {
-    return { center: [firstApt.longitude!, firstApt.latitude!], zoom: 14 }
-  }
-
-  // 3. Premier POI
-  if (pois.length > 0) {
-    return { center: [pois[0].longitude, pois[0].latitude], zoom: 14 }
-  }
 
   // 4. Paris par défaut
   return { center: [2.3522, 48.8566], zoom: 12 }
